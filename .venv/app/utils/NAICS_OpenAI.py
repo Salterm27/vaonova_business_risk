@@ -9,23 +9,28 @@ load_dotenv()
 api_key = os.getenv("openai_key")
 
 client = OpenAI(api_key=api_key)
-
-def fetch_naics_code(business_category: str) -> str:
+def fetch_naics_code(business_category: str) -> dict:
     prompt = (
-        f"What is the most relevant 2022 NAICS code for a business in the category: '{business_category}'? "
-        "Only return the 6-digit NAICS code followed by a brief description."
+        f"Give the most relevant 2022 NAICS code for the business category '{business_category}'. "
+        "Respond with a compact, single-line JSON object like: {\"code\": \"xxxxx\", \"description\": \"...\"}. "
+        "Do not include any extra text, line breaks, or formatting. Only return the JSON."
     )
 
-    response = openai.ChatCompletion.create(
-        model="gpt-4",
+    response = client.chat.completions.create(
+        model="gpt-3.5-turbo",
         messages=[
             {
                 "role": "system",
-                "content": "You are a helpful assistant knowledgeable about business classifications and NAICS codes."
+                "content": "You are a helpful assistant. You always return clean, compact, one-line JSON responses only."
             },
             {"role": "user", "content": prompt}
         ],
         temperature=0.2
     )
 
-    return response['choices'][0]['message']['content'].strip()
+    content = response.choices[0].message.content.strip()
+
+    try:
+        return json.loads(content)
+    except json.JSONDecodeError:
+        raise ValueError(f"Could not parse response as JSON: {content}")
