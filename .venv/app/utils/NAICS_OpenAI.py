@@ -3,6 +3,7 @@ import json
 from dotenv import load_dotenv
 from motor.motor_asyncio import AsyncIOMotorClient
 from openai import OpenAI
+import requests
 
 
 # Load environment variables
@@ -11,10 +12,16 @@ api_key = os.getenv("openai_key")
 
 MONGO_URI = os.getenv("MONGO_URI")
 mongoClient = AsyncIOMotorClient(MONGO_URI)
-db = mongoClient["naics_db"]
-collection = db["naics_codes"]
+NAICS_db = mongoClient["naics_db"]
+codes_collection = db["naics_codes"]
+roles_collection = db["naics_roles"]
 
 
+API_URL = "https://api.bls.gov/publicAPI/v2/timeseries/data/"
+API_KEY = os.getenv("BLS_API_KEY")
+
+
+# functions and definitions
 
 client = OpenAI(api_key=api_key)
 def fetch_naics_code_from_gpt(business_category: str) -> dict:
@@ -54,3 +61,4 @@ async def save_naics_to_db(category: str, code: str, description: str):
         "description": description
     }
     await collection.insert_one(doc)
+
