@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from app.routes import labour
+from app.routes import labour_routes
 
 from dotenv import load_dotenv
 import os
@@ -17,4 +17,4 @@ async def root():
     return {"message": "Hello World"}
 
 
-app.include_router(labour.router)
+app.include_router(labour_routes.router)
