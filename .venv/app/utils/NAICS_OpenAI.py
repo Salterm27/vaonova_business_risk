@@ -1,6 +1,7 @@
 import os
 import json
 from dotenv import load_dotenv
+from motor.motor_asyncio import AsyncIOMotorClient
 from openai import OpenAI
 
 
@@ -8,8 +9,15 @@ from openai import OpenAI
 load_dotenv()
 api_key = os.getenv("openai_key")
 
+MONGO_URI = os.getenv("MONGO_URI")
+mongoClient = AsyncIOMotorClient(MONGO_URI)
+db = mongoClient["naics_db"]
+collection = db["naics_codes"]
+
+
+
 client = OpenAI(api_key=api_key)
-def fetch_naics_code(business_category: str) -> dict:
+def fetch_naics_code_from_gpt(business_category: str) -> dict:
     prompt = (
         f"Give the most relevant 2022 NAICS code for the business category '{business_category}'. "
         "Respond with a compact, single-line JSON object like: {\"code\": \"xxxxx\", \"description\": \"...\"}. "
@@ -34,3 +42,15 @@ def fetch_naics_code(business_category: str) -> dict:
         return json.loads(content)
     except json.JSONDecodeError:
         raise ValueError(f"Could not parse response as JSON: {content}")
+
+
+async def get_naics_from_db(category: str):
+    return await collection.find_one({"category": category.lower()})
+
+async def save_naics_to_db(category: str, code: str, description: str):
+    doc = {
+        "category": category.lower(),
+        "code": code,
+        "description": description
+    }
+    await collection.insert_one(doc)

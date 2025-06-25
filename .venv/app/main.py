@@ -7,6 +7,7 @@ import os
 load_dotenv()  # 👈 loads from .env
 
 OPENAI_API_KEY = os.getenv("openai_key")
+MONGO_URI = os.getenv("MONGO_URI")
 
 
 app = FastAPI()
